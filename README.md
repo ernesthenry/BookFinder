@@ -28,7 +28,7 @@ A full-stack application for interacting with the Google Books API, featuring a 
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/google-books-api-app.git
+   git clone https://github.com/ernesthenry/BookFinder.git
    cd google-books-api-app/backend
    ```
 
