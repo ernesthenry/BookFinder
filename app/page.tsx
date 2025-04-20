@@ -1,18 +1,30 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import SearchBar from '@/components/SearchBar'
 import BookList from '@/components/BookList'
 import { Book } from '@/types/book'
-import { Yesteryear } from 'next/font/google'
 
 export default function Home() {
   const [books, setBooks] = useState<Book[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [totalResults, setTotalResults] = useState(0)
+  
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  
+  useEffect(() => {
+    const query = searchParams.get('q')
+    if (query) {
+      setSearchQuery(query)
+      handleSearch(query)
+    }
+  }, [searchParams])
 
   const handleSearch = async (query: string) => {
     if (!query.trim()) return
@@ -21,19 +33,31 @@ export default function Home() {
     setError(null)
     setSearchQuery(query)
     
+    // Update URL with search query
+    router.push(`/?q=${encodeURIComponent(query)}`, { scroll: false })
+    
     try {
-      const response = await fetch(`/api/books/search?q=${encodeURIComponent(query)}`)
+      const response = await fetch(`/api/books/search?q=${encodeURIComponent(query)}&maxResults=40`)
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`)
+      }
+      
       const data = await response.json()
       
       if (data.error) {
         setError(data.error)
         setBooks([])
+        setTotalResults(0)
       } else {
         setBooks(data.items || [])
+        setTotalResults(data.totalItems || 0)
       }
     } catch (err) {
       setError('Failed to fetch books. Please try again.')
       setBooks([])
+      setTotalResults(0)
+      console.error('Search error:', err)
     } finally {
       setIsLoading(false)
     }
@@ -48,7 +72,7 @@ export default function Home() {
             Discover and explore your next favorite book
           </p>
           
-          <SearchBar onSearch={handleSearch} />
+          <SearchBar onSearch={handleSearch} initialQuery={searchQuery} />
         </div>
 
         {isLoading && (
@@ -59,14 +83,20 @@ export default function Home() {
 
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative my-4">
-            {error}
+            <span className="font-medium">Error:</span> {error}
+            <button 
+              className="ml-4 text-red-700 underline"
+              onClick={() => handleSearch(searchQuery)}
+            >
+              Try again
+            </button>
           </div>
         )}
 
-        {books.length > 0 && (
+        {books.length > 0 && !isLoading && (
           <div className="w-full">
             <h2 className="text-2xl font-semibold mb-4">
-              {books.length} results for "{searchQuery}"
+              {totalResults > 0 ? `Found ${totalResults} books` : books.length} results for "{searchQuery}"
             </h2>
             <BookList books={books} />
           </div>
@@ -83,16 +113,28 @@ export default function Home() {
                 priority
               />
             </div>
-            <h2 className="text-xl font-medium text-gray-700 mb-2">
-              Search for books to get started
-            </h2>
-            <p className="text-gray-500">
-              Try searching by title, author, or ISBN
-            </p>
+            {searchQuery ? (
+              <>
+                <h2 className="text-xl font-medium text-gray-700 mb-2">
+                  No books found for "{searchQuery}"
+                </h2>
+                <p className="text-gray-500">
+                  Try using different keywords or check your spelling
+                </p>
+              </>
+            ) : (
+              <>
+                <h2 className="text-xl font-medium text-gray-700 mb-2">
+                  Search for books to get started
+                </h2>
+                <p className="text-gray-500">
+                  Try searching by title, author, or ISBN
+                </p>
+              </>
+            )}
           </div>
         )}
       </div>
     </main>
   )
 }
-                                                                                                          
