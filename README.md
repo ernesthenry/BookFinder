@@ -1,78 +1,135 @@
-<p align="center">
-  <a href="https://nextjs-flask-starter.vercel.app/">
-    <img src="https://assets.vercel.com/image/upload/v1588805858/repositories/vercel/logo.png" height="96">
-    <h3 align="center">Next.js Flask Starter</h3>
-  </a>
-</p>
+# Google Books API - Flask Backend
 
-<p align="center">Simple Next.js boilerplate that uses <a href="https://flask.palletsprojects.com/">Flask</a> as the API backend.</p>
+A Flask application that serves as a backend for interacting with the Google Books API, providing book search functionality and bookshelf management.
 
-<br/>
+## Features
 
-## Introduction
+- **Book Search**: Search for books using the Google Books API
+- **Authentication**: Google OAuth integration for accessing user's Google Books library
+- **Bookshelf Management**: Create and manage bookshelves with or without Google authentication
+- **Local Storage**: Local bookshelf support for users without Google accounts
 
-This is a hybrid Next.js + Python app that uses Next.js as the frontend and Flask as the API backend. One great use case of this is to write Next.js apps that use Python AI libraries on the backend.
+## Prerequisites
 
-## How It Works
+- Python 3.7+
+- Google Books API key
+- Google OAuth credentials (for authentication features)
 
-The Python/Flask server is mapped into to Next.js app under `/api/`.
+## Installation
 
-This is implemented using [`next.config.js` rewrites](https://github.com/vercel/examples/blob/main/python/nextjs-flask/next.config.js) to map any request to `/api/:path*` to the Flask API, which is hosted in the `/api` folder.
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/google-books-api-flask.git
+   cd google-books-api-flask
+   ```
 
-On localhost, the rewrite will be made to the `127.0.0.1:5328` port, which is where the Flask server is running.
+2. Create a virtual environment and activate it:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
 
-In production, the Flask server is hosted as [Python serverless functions](https://vercel.com/docs/concepts/functions/serverless-functions/runtimes/python) on Vercel.
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-## Demo
+4. Create a `.env` file in the project root directory:
+   ```
+   # Flask configuration
+   FLASK_SECRET_KEY=your_secure_random_key
+   FLASK_ENV=development
 
-https://nextjs-flask-starter.vercel.app/
+   # Google Books API configuration 
+   GOOGLE_BOOKS_API_KEY=your_google_books_api_key
 
-## Deploy Your Own
+   # Google OAuth configuration
+   GOOGLE_CLIENT_ID=your_google_client_id
+   GOOGLE_CLIENT_SECRET=your_google_client_secret
+   ```
 
-You can clone & deploy it to Vercel with one click:
+   > **Note**: To generate a secure random key for `FLASK_SECRET_KEY`, you can use Python's `secrets` module:
+   > ```python
+   > import secrets
+   > print(secrets.token_hex(16))
+   > ```
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?demo-title=Next.js%20Flask%20Starter&demo-description=Simple%20Next.js%20boilerplate%20that%20uses%20Flask%20as%20the%20API%20backend.&demo-url=https%3A%2F%2Fnextjs-flask-starter.vercel.app%2F&demo-image=%2F%2Fimages.ctfassets.net%2Fe5382hct74si%2F795TzKM3irWu6KBCUPpPz%2F44e0c6622097b1eea9b48f732bf75d08%2FCleanShot_2023-05-23_at_12.02.15.png&project-name=Next.js%20Flask%20Starter&repository-name=nextjs-flask-starter&repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fexamples%2Ftree%2Fmain%2Fpython%2Fnextjs-flask&from=vercel-examples-repo)
+## Getting API Keys
 
-## Developing Locally
+### Google Books API Key
 
-You can clone & create this repo with the following command
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Navigate to "APIs & Services" > "Library"
+4. Search for "Books API" and enable it
+5. Go to "APIs & Services" > "Credentials"
+6. Create an API key and add it to your `.env` file
+
+### Google OAuth Credentials
+
+1. In the Google Cloud Console, go to "APIs & Services" > "Credentials"
+2. Click "Create Credentials" and select "OAuth client ID"
+3. Configure the OAuth consent screen if prompted
+4. Select "Web application" as the application type
+5. Add authorized redirect URIs:
+   - `http://localhost:5328/api/auth/authorize` (for local development)
+   - Your production callback URL if applicable
+6. Create the client ID and add both the client ID and client secret to your `.env` file
+
+## Running the Application
+
+Start the Flask server:
 
 ```bash
-npx create-next-app nextjs-flask --example "https://github.com/vercel/examples/tree/main/python/nextjs-flask"
+python app.py
 ```
 
-## Getting Started
+The server will be available at http://localhost:5328
 
-First, install the dependencies:
+## API Documentation
 
-```bash
-npm install
-# or
-yarn
-# or
-pnpm install
-```
+API documentation is available at the `/api/docs` endpoint when running the server. The main endpoints include:
 
-Then, run the development server:
+### Volume Endpoints
+- `/api/books/search` - Search for books
+- `/api/books/<volume_id>` - Get specific volume details
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-```
+### Local Bookshelf Endpoints
+- `/api/bookshelves` - Get local bookshelves
+- `/api/bookshelves/<shelf_id>/books` - Get or add books to a local bookshelf
+- `/api/bookshelves/<shelf_id>/books/<book_id>` - Remove a book from a local bookshelf
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Authentication Endpoints
+- `/api/auth/login` - Initiate OAuth2 login flow
+- `/api/auth/authorize` - OAuth2 callback endpoint
+- `/api/auth/logout` - Log out and clear session
+- `/api/auth/status` - Check authentication status
 
-The Flask server will be running on [http://127.0.0.1:5328](http://127.0.0.1:5328) – feel free to change the port in `package.json` (you'll also need to update it in `next.config.js`).
+### My Library Endpoints (Requires Authentication)
+- `/api/mylibrary/bookshelves` - Get authenticated user's bookshelves
+- `/api/mylibrary/bookshelves/<shelf_id>/volumes` - Get volumes in user's bookshelf
+- `/api/mylibrary/bookshelves/<shelf_id>/addVolume` - Add a volume to user's bookshelf
+- `/api/mylibrary/bookshelves/<shelf_id>/removeVolume` - Remove a volume from user's bookshelf
+- `/api/mylibrary/bookshelves/<shelf_id>/clearVolumes` - Clear all volumes from user's bookshelf
 
-## Learn More
+## Error Handling
 
-To learn more about Next.js, take a look at the following resources:
+The application includes comprehensive error handling for:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [Flask Documentation](https://flask.palletsprojects.com/en/1.1.x/) - learn about Flask features and API.
+- Missing environment variables
+- API request failures
+- Authentication issues
+- Invalid parameters
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+Missing Google OAuth credentials will disable authentication features but the application will continue to function with local bookshelf support.
+
+## Security Notes
+
+- In production, always use HTTPS
+- Store your API keys and secrets securely
+- Replace the in-memory storage with a proper database
+- Set appropriate CORS headers for your frontend
+
+## License
+
+[MIT License](LICENSE)
